@@ -298,6 +298,10 @@ class Transformer:
             )
             crop_height = source_height
 
+        # rounding can produce an empty crop for extreme aspect ratios
+        crop_width = max(1, crop_width)
+        crop_height = max(1, crop_height)
+
         crop_left = int(
             round(
                 min(
@@ -386,6 +390,11 @@ class Transformer:
         ):
             return
 
+        # a width-only or height-only request derives the other side by
+        # rounding, which can give 0 and would divide by zero below
+        self.target_width = self.target_width or 1
+        self.target_height = self.target_height or 1
+
         # add 1e-5 to get .5 rounding up in Python3 as it was in Python2
         if (
             source_width / self.target_width * sign
@@ -400,6 +409,10 @@ class Transformer:
             resize_width = round(
                 source_width * self.target_height / source_height + 1e-5
             )
+
+        # never ask the engine for an empty image
+        resize_width = max(1, resize_width)
+        resize_height = max(1, resize_height)
 
         # ensure that filter should work on the real image size
         # and not on the request size which might be smaller than the
